@@ -1,73 +1,222 @@
-import utils from './utils'
+//import { reset } from 'browser-sync';
+import platform from '../gameimages/platform.png'
 
-const canvas = document.querySelector('canvas')
-const c = canvas.getContext('2d')
+console.log(platform)
 
-canvas.width = innerWidth
-canvas.height = innerHeight
+const canvas = document.querySelector("canvas");
 
-const mouse = {
-  x: innerWidth / 2,
-  y: innerHeight / 2
-}
+const c = canvas.getContext("2d");
 
-const colors = ['#2185C5', '#7ECEFD', '#FFF6E5', '#FF7F66']
+canvas.width = 1024;
+canvas.height = 576;
 
-// Event Listeners
-addEventListener('mousemove', (event) => {
-  mouse.x = event.clientX
-  mouse.y = event.clientY
-})
 
-addEventListener('resize', () => {
-  canvas.width = innerWidth
-  canvas.height = innerHeight
 
-  init()
-})
+console.log(c);
 
-// Objects
-class Object {
-  constructor(x, y, radius, color) {
-    this.x = x
-    this.y = y
-    this.radius = radius
-    this.color = color
+const gravity = 1.5;
+
+class Player {
+  constructor() {
+    this.position = {
+      x: 100,
+      y: 100,
+    };
+    this.velocity = {
+      x: 0,
+      y: 0,
+    };
+    this.width = 30;
+    this.height = 30;
   }
 
   draw() {
-    c.beginPath()
-    c.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false)
-    c.fillStyle = this.color
-    c.fill()
-    c.closePath()
+    c.fillStyle = "#f72585";
+    c.fillRect(this.position.x, this.position.y, this.width, this.height);
   }
 
   update() {
-    this.draw()
+    this.draw();
+    this.position.x += this.velocity.x;
+
+    this.position.y += this.velocity.y;
+    if (this.position.y > canvas.height){ console.log('you lose')}
+    if (this.position.y + this.height + this.velocity.y <= canvas.height)
+    this.velocity.y += gravity;
+  }
+
+  reset(){
+    this.position = {
+      x: 100,
+      y: 100,
+    };
+    this.velocity = {
+      x: 0,
+      y: 0,
+    };
+  }
+
+}
+
+class Platform {
+  constructor({x, y}) {
+    this.position = {
+      x: x,
+      y: y,
+    };
+this.image = image
+
+    this.width = image.width
+    this.height = image.height;
+
+    
+  }
+
+  draw() {
+    c.drawImage(this.image, this.position.x, this.position.y)
+  }
+
+  resetPlatform(){
+    this.position = {
+      x: x,
+      y: y,
+    };
+this.image = image
+
+    this.width = image.width
+    this.height = image.height;
+    
   }
 }
 
-// Implementation
-let objects
-function init() {
-  objects = []
+const image = new Image()
+image.src = platform
 
-  for (let i = 0; i < 400; i++) {
-    // objects.push()
-  }
-}
+const player = new Player();
+const platforms = [
+  new Platform({
+     x:-1, 
+     y:470,
+     image: image
+    }), 
+    new Platform({x: image.width -2, y:470, image}),
+    new Platform({x:image.width *2 +100, y:470, image}),
+    new Platform({x:image.width *3 +200, y:470, image}),
+    new Platform({x:image.width *4 +400, y:470, image}),
+    new Platform({x:image.width *5 +600, y:470, image}),
+    new Platform({x:image.width *6 +800, y:470, image}),
+    new Platform({x:image.width *7 +1000, y:470, image}),
+    new Platform({x:image.width *8 + 1200, y:470, image}),
+    new Platform({x:image.width *9 + 1400, y:470, image}),
+    new Platform({x:image.width *10 + 1600, y:470, image}),
+  ]
 
-// Animation Loop
+
+  
+
+const keys = {
+  right: {
+    pressed: false,
+  },
+  left: {
+    pressed: false,
+  },
+};
+
+
+let scrollOffsett = 0
+
+
+
 function animate() {
-  requestAnimationFrame(animate)
-  c.clearRect(0, 0, canvas.width, canvas.height)
+  requestAnimationFrame(animate);
+  c.fillStyle = '#8eecf5'
+  c.fillRect(0, 0, canvas.width, canvas.height);
+ 
+  platforms.forEach(platform => {platform.draw()})
+ player.update()
 
-  c.fillText('HTML CANVAS BOILERPLATE', mouse.x, mouse.y)
-  // objects.forEach(object => {
-  //  object.update()
-  // })
+  if (keys.right.pressed && player.position.x <450) {
+    player.velocity.x = 5;
+  } else if (keys.left.pressed && player.position.x > 100) {
+    player.velocity.x = -5
+  } else {player.velocity.x = 0}
+
+if (keys.right.pressed) {
+    scrollOffsett += 5
+    platforms.forEach(platform => {platform.position.x -= 5} )
+    
+} else if (keys.left.pressed){
+    scrollOffsett -= 5
+    platforms.forEach(platform => {platform.position.x += 5})
 }
 
-init()
-animate()
+// win condition
+if (scrollOffsett > 6000){
+    console.log('you win')
+}
+
+//lose condition
+if (player.position.y > canvas.height){
+  player.reset()
+}
+  //platform collision detection
+platforms.forEach((platform) => {
+  if (player.position.y + player.height <= platform.position.y && player.position.y + player.height + player.velocity.y >= platform.position.y && player.position.x + player.width >= platform.position.x && player.position.x <= platform.position.x + platform.width) {
+      player.velocity.y =0
+  }
+})
+
+}
+
+
+
+animate();
+
+window.addEventListener("keydown", ({ keyCode }) => {
+  console.log(keyCode);
+  switch (keyCode) {
+    case 37:
+      console.log("left");
+      keys.left.pressed = true;
+      break;
+
+    case 40:
+      console.log("down");
+      break;
+
+    case 39:
+      console.log("right");
+      keys.right.pressed = true;
+      break;
+
+    case 38:
+      console.log("up");
+      player.velocity.y -= 5;
+      break;
+  }
+});
+
+window.addEventListener("keyup", ({ keyCode }) => {
+  console.log(keyCode);
+  switch (keyCode) {
+    case 37:
+      console.log("left");
+      keys.left.pressed = false;
+      break;
+
+    case 40:
+      console.log("down");
+      break;
+
+    case 39:
+      console.log("right");
+      keys.right.pressed = false;
+      break;
+
+    case 38:
+      console.log("up");
+      player.velocity.y -= 20;
+      break;
+  }
+});
